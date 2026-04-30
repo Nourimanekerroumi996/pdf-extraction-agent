@@ -1,21 +1,25 @@
-from app.extractors.entities import extract_entities
+from app.agent.graph import agent
 
-texte = """
-FACTURE N°2024-001
-Date : 12 mars 2024
-Client : Jean Dupont
-Société : ABC Consulting
+initial_state = {
+    "pdf_path": "tests/fixtures/sample.pdf",
+    "filename": "sample.pdf",
+    "text": "",
+    "pages": 0,
+    "tables": [],
+    "ocr_results": [],
+    "entities": {},
+    "errors": [],
+    "final_output": None
+}
 
-Produit          Prix
-Développement    1500€
-Réunion          200€
+result = agent.invoke(initial_state)
+output = result["final_output"]
 
-Total : 1700€
-Signé par : Marie Martin
-"""
-
-resultat = extract_entities(texte)
-print(f"Titres : {resultat['titles']}")
-print(f"Dates : {resultat['dates']}")
-print(f"Montants : {resultat['amounts']}")
-print(f"Noms : {resultat['names']}")
+print(f"Fichier : {output['filename']}")
+print(f"Pages : {output['pages']}")
+print(f"Noms : {output['names']}")
+print(f"Dates : {output['dates']}")
+print(f"Montants : {output['amounts']}")
+print(f"Titres : {output['titles'][:3]}")
+print(f"Tableaux : {len(output['tables'])}")
+print(f"Erreurs : {result['errors']}")

@@ -1,12 +1,13 @@
-from typing import TypedDict
+from typing import TypedDict, Annotated
+import operator
 
 class AgentState(TypedDict):
     pdf_path: str
     filename: str
     text: str
     pages: int
-    tables: list
-    ocr_results: list
+    tables: Annotated[list, operator.add]
+    ocr_results: Annotated[list, operator.add]
     entities: dict
-    errors: list
+    errors: Annotated[list, operator.add]
     final_output: dict | None
