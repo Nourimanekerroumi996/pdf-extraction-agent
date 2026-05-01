@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Extraction Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 30px 40px;
+            border-bottom: 1px solid #2a2a3e;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        header span {
+            font-size: 0.8rem;
+            background: #1e3a5f;
+            color: #60a5fa;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #3a3a5e;
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #13131f;
+        }
+
+        .upload-zone:hover, .upload-zone.dragging {
+            border-color: #60a5fa;
+            background: #1a1a2e;
+        }
+
+        .upload-zone .icon { font-size: 3rem; margin-bottom: 15px; }
+
+        .upload-zone h2 {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .upload-zone input { display: none; }
+
+        .btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #1d4ed8; }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loader .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #2a2a3e;
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .results { display: none; margin-top: 40px; }
+
+        .results h2 {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #13131f;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card .card-title {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .card .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .section {
+            background: #13131f;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .tag-blue { background: #1e3a5f; color: #60a5fa; }
+        .tag-green { background: #1a3a2a; color: #4ade80; }
+        .tag-yellow { background: #3a2e1a; color: #fbbf24; }
+        .tag-purple { background: #2a1a3e; color: #c084fc; }
+
+        .empty { color: #4b5563; font-style: italic; font-size: 0.9rem; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: #1a1a2e;
+            padding: 10px;
+            text-align: left;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #2a2a3e;
+            color: #d1d5db;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .error-box {
+            display: none;
+            background: #3a1a1a;
+            border: 1px solid #7f1d1d;
+            border-radius: 12px;
+            padding: 20px;
+            color: #fca5a5;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>🤖</div>
+    <h1>PDF Extraction Agent</h1>
+    <span>Powered by LangGraph + Groq</span>
+</header>
+
+<div class="container">
+    <div class="upload-zone" id="uploadZone">
+        <div class="icon">📄</div>
+        <h2>Drop your PDF here</h2>
+        <p>or click to browse your files</p>
+        <input type="file" id="fileInput" accept=".pdf">
+        <br>
+        <button class="btn" onclick="document.getElementById('fileInput').click()">
+            Choose PDF
+        </button>
+    </div>
+
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <p style="color: #6b7280;">Extracting data from your PDF...</p>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="results" id="results">
+        <h2>📊 Extraction Results</h2>
+
+        <div class="cards">
+            <div class="card">
+                <div class="card-title">Pages</div>
+                <div class="card-value" id="statPages">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Tables Found</div>
+                <div class="card-value" id="statTables">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Names Found</div>
+                <div class="card-value" id="statNames">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Amounts Found</div>
+                <div class="card-value" id="statAmounts">0</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📌 Titles</h3>
+            <div class="tags" id="titles"></div>
+        </div>
+
+        <div class="section">
+            <h3>👤 Names & Organizations</h3>
+            <div class="tags" id="names"></div>
+        </div>
+
+        <div class="section">
+            <h3>📅 Dates</h3>
+            <div class="tags" id="dates"></div>
+        </div>
+
+        <div class="section">
+            <h3>💰 Amounts</h3>
+            <div class="tags" id="amounts"></div>
+        </div>
+
+        <div class="section">
+            <h3>📊 Tables</h3>
+            <div id="tables"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const uploadZone = document.getElementById('uploadZone')
+    const fileInput = document.getElementById('fileInput')
+    const loader = document.getElementById('loader')
+    const results = document.getElementById('results')
+    const errorBox = document.getElementById('errorBox')
+
+    // Drag & drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault()
+        uploadZone.classList.add('dragging')
+    })
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragging')
+    })
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault()
+        uploadZone.classList.remove('dragging')
+        const file = e.dataTransfer.files[0]
+        if (file && file.name.endsWith('.pdf')) processFile(file)
+    })
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) processFile(fileInput.files[0])
+    })
+
+    async function processFile(file) {
+        // Reset
+        results.style.display = 'none'
+        errorBox.style.display = 'none'
+        loader.style.display = 'block'
+
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/extract', {
+                method: 'POST',
+                body: formData
+            })
+
+            if (!response.ok) throw new Error('Extraction failed')
+
+            const data = await response.json()
+            displayResults(data)
+
+        } catch (err) {
+            loader.style.display = 'none'
+            errorBox.style.display = 'block'
+            errorBox.textContent = '❌ Error: Make sure the API is running on http://127.0.0.1:8000'
+        }
+    }
+
+    function displayResults(data) {
+        loader.style.display = 'none'
+        results.style.display = 'block'
+
+        // Stats
+        document.getElementById('statPages').textContent = data.pages || 0
+        document.getElementById('statTables').textContent = (data.tables || []).length
+        document.getElementById('statNames').textContent = (data.names || []).length
+        document.getElementById('statAmounts').textContent = (data.amounts || []).length
+
+        // Tags
+        renderTags('titles', data.titles || [], 'tag-purple')
+        renderTags('names', data.names || [], 'tag-blue')
+        renderTags('dates', data.dates || [], 'tag-green')
+        renderTags('amounts', data.amounts || [], 'tag-yellow')
+
+        // Tables
+        const tablesDiv = document.getElementById('tables')
+        if (!data.tables || data.tables.length === 0) {
+            tablesDiv.innerHTML = '<p class="empty">No tables found</p>'
+        } else {
+            tablesDiv.innerHTML = data.tables.slice(0, 3).map((t, i) => `
+                <p style="color:#6b7280; font-size:0.8rem; margin-bottom:8px;">
+                    Table ${i+1} — Page ${t.page}
+                </p>
+                <table>
+                    <tr>${(t.headers || []).map(h => `<th>${h}</th>`).join('')}</tr>
+                    ${(t.rows || []).slice(0, 5).map(row =>
+                        `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+                    ).join('')}
+                </table>
+                <br>
+            `).join('')
+        }
+    }
+
+    function renderTags(id, items, cls) {
+        const el = document.getElementById(id)
+        if (!items || items.length === 0) {
+            el.innerHTML = '<span class="empty">Nothing found</span>'
+        } else {
+            el.innerHTML = items.map(item =>
+                `<span class="tag ${cls}">${item}</span>`
+            ).join('')
+        }
+    }
+</script>
+
+</body>
+</html>

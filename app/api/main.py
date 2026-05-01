@@ -1,8 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import tempfile
 import os
-import uuid
 import time
 import mlflow
 from app.agent.graph import agent
@@ -13,13 +13,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def root():
+    return FileResponse("static/index.html")
+
 mlflow.set_experiment("pdf-extraction-agent")
 
 @app.post("/extract")
 async def extract_pdf(file: UploadFile = File(...)):
-    """
-    Reçoit un PDF, lance l'agent et retourne les données extraites.
-    """
     if not file.filename.endswith(".pdf"):
         raise HTTPException(400, "Fichier PDF requis")
 
@@ -29,10 +32,7 @@ async def extract_pdf(file: UploadFile = File(...)):
 
     try:
         with mlflow.start_run():
-            # Log le nom du fichier
             mlflow.set_tag("filename", file.filename)
-
-            # Mesure le temps de traitement
             start_time = time.time()
 
             initial_state = {
@@ -49,10 +49,8 @@ async def extract_pdf(file: UploadFile = File(...)):
 
             result = agent.invoke(initial_state)
             output = result["final_output"]
-
             duration = time.time() - start_time
 
-            # Log les métriques
             mlflow.log_metric("pages", output["pages"])
             mlflow.log_metric("tables_found", len(output["tables"]))
             mlflow.log_metric("names_found", len(output["names"]))
