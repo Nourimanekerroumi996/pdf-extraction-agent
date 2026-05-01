@@ -45,20 +45,23 @@ Then open **http://localhost:8000/docs** in your browser and upload any PDF.
 ---
 
 ## 🏗️ How it works
-PDF uploaded
-↓
-FastAPI receives the file
-↓
-LangGraph Agent starts
-├── Step 1 → pdfplumber   extract raw text
-├── Step 2 → camelot      extract tables
-├── Step 3 → pytesseract  OCR for scanned pages
-├── Step 4 → Groq Llama3  extract names, dates, amounts
-└── Step 5 → Pydantic     validate and structure output
-↓
-Clean JSON returned
 
----
+```
+PDF uploaded
+      ↓
+FastAPI receives the file
+      ↓
+LangGraph Agent starts
+      │
+      ├── Step 1 → pdfplumber    extract raw text
+      ├── Step 2 → camelot       extract tables
+      ├── Step 3 → pytesseract   OCR for scanned pages
+      ├── Step 4 → Groq Llama3   extract names, dates, amounts
+      └── Step 5 → Pydantic      validate and structure output
+      │
+      ↓
+Clean JSON returned
+```
 
 ## 📤 Example Output
 
@@ -116,20 +119,23 @@ docker-compose up --build
 The API will be available at **http://localhost:8000/docs**
 
 ---
-
 ## 📁 Project Structure
 
+```
 pdf-extraction-agent/
+│
 ├── app/
-│   ├── agent/          # LangGraph pipeline
-│   ├── extractors/     # text, tables, OCR, entities
-│   ├── schemas/        # Pydantic output schema
-│   ├── api/            # FastAPI endpoints
-│   └── storage/        # AWS S3 (coming soon)
+│   ├── agent/          → LangGraph pipeline
+│   ├── extractors/     → text, tables, OCR, entities
+│   ├── schemas/        → Pydantic output schema
+│   ├── api/            → FastAPI endpoints
+│   └── storage/        → AWS S3
+│
 ├── tests/
 ├── Dockerfile
 ├── docker-compose.yml
-└── .github/workflows/  # CI/CD
+└── .github/workflows/  → CI/CD
+```
 
 ---
 
