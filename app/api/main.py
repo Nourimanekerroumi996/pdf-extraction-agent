@@ -6,13 +6,19 @@ import os
 import time
 import mlflow
 from app.agent.graph import agent
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="PDF Extraction Agent",
     description="Agent IA pour extraire des données structurées depuis des PDFs",
     version="1.0.0"
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
