@@ -2,7 +2,18 @@
 
 ![CI](https://github.com/Nourimanekerroumi996/pdf-extraction-agent/actions/workflows/ci.yml/badge.svg)
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online-brightgreen)](https://pdf-extraction-agent-17b7.onrender.com)
+
+
+
 > An agentic AI system that automatically extracts structured data from any PDF — text, tables, dates, amounts, and names. Upload a PDF, get clean JSON back in seconds.
+
+---
+## 🌐 Live Demo
+
+👉 **[Try it here](https://pdf-extraction-agent-17b7.onrender.com)**
+
+> Note: Free instance may take 30-50 seconds to wake up on first request.
 
 ---
 
